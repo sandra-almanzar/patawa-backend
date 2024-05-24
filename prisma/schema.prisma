@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model User {
+  userId         Int          @id @default(autoincrement()) @map("user_id")
+  email          String       @unique
+  password       String       @default("") @map("password")
+  fullName       String       @map("full_name")
+  age            Int?
+  documentTypeId Int          @map("document_type_id")
+  documentNumber String       @unique @map("document_number")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  lastLoginAt    DateTime     @updatedAt @map("last_login_at")
+  avatarUrl      String?      @map("avatar_url")
+  enabled        Boolean      @default(true)
+  DocumentType   DocumentType @relation(fields: [documentTypeId], references: [documentTypeId])
+  Addresses      Address[]
+  Phones         UserPhone[]
+  UserRoles      UserRole[]
+  Dogs           Dog[]        @relation("ownerUser")
+  Walks          Walk[]       @relation("walkerUser")
+
+  @@map("users")
+}
+
+model DocumentType {
+  documentTypeId Int    @id @default(autoincrement()) @map("document_type_id")
+  typeName       String @unique @map("document_type_name")
+  abbreviation   String @unique
+  Users          User[]
+
+  @@map("document_types")
+}
+
+model Address {
+  addressId     Int    @id @default(autoincrement()) @map("address_id")
+  userId        Int    @map("user_id")
+  addressDetail String
+  city          String
+  User          User   @relation(fields: [userId], references: [userId])
+
+  @@map("addresses")
+}
+
+model UserPhone {
+  phoneId     Int    @id @default(autoincrement()) @map("phone_id")
+  userId      Int    @map("user_id")
+  phoneNumber String @map("phone_number")
+  User        User   @relation(fields: [userId], references: [userId])
+
+  @@map("user_phones")
+}
+
+model Role {
+  roleId    Int        @id @default(autoincrement()) @map("role_id")
+  roleName  String     @unique @map("role_name")
+  UserRoles UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  userId Int
+  roleId Int
+  User   User @relation(fields: [userId], references: [userId])
+  Role   Role @relation(fields: [roleId], references: [roleId])
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model Dog {
+  dogId       Int          @id @default(autoincrement()) @map("dog_id")
+  ownerUserId Int          @map("owner_user_id")
+  age         Int
+  color       String
+  fullName    String       @map("full_name")
+  weight      Float
+  size        String
+  breedId     Int          @map("breed_id")
+  photo       String?
+  enabled     Boolean      @default(true)
+  Owner       User         @relation(fields: [ownerUserId], references: [userId], name: "ownerUser")
+  Breed       Breed        @relation(fields: [breedId], references: [breedId])
+  WalkDetails WalkDetail[]
+
+  @@map("dogs")
+}
+
+model Breed {
+  breedId   Int    @id @default(autoincrement()) @map("breed_id")
+  breedName String @unique @map("breed_name")
+  Dogs      Dog[]
+
+  @@map("breeds")
+}
+
+model Walk {
+  walkId       Int          @id @default(autoincrement()) @map("walk_id")
+  dateTime     DateTime     @map("date_time")
+  duration     Int
+  location     String
+  enabled      Boolean      @default(true)
+  walkerUserId Int          @map("walker_user_id")
+  Walker       User         @relation(fields: [walkerUserId], references: [userId], name: "walkerUser")
+  WalkDetails  WalkDetail[]
+
+  @@map("walks")
+}
+
+model WalkDetail {
+  walkDetailId Int     @id @default(autoincrement()) @map("walk_detail_id")
+  walkId       Int     @map("walk_id")
+  dogId        Int     @map("dog_id")
+  comments     String?
+  Walk         Walk    @relation(fields: [walkId], references: [walkId], onDelete: Cascade)
+  Dog          Dog     @relation(fields: [dogId], references: [dogId])
+
+  @@map("walk_details")
+}
