@@ -3,7 +3,7 @@
 ## Instalación
 
 1. Clona este repositorio en tu máquina local.
-2. Instala las dependencias usando npm :
+2. Instala las dependencias usando npm:
 
 ```bash
 npm install
